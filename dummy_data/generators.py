@@ -4,6 +4,7 @@ Evaluators to produce dummy data from DummyData models.
 
 import re
 from collections import OrderedDict
+from json import loads, dumps
 
 from . import functions
 from .exceptions import DDEvaluatorException
@@ -46,7 +47,14 @@ ARG_PATTERN = re.compile(r"""
 """, re.VERBOSE)
 
 
-def json(json, allow_callable=False, iteration=None):
+def generate_json(data):
+    """
+    Parse json and call evaluator.
+    """
+    return dumps(evaluate_parsed(loads(data, object_pairs_hook=OrderedDict)))
+
+
+def evaluate_parsed(parsed, allow_callable=False, iteration=None):
     """
     Traverse parsed JSON data and evaluate tags.
     """
@@ -68,7 +76,7 @@ def json(json, allow_callable=False, iteration=None):
                     match.group('function')
                 )
             )
-        if hasattr(json, '__call__') and not allow_callable:
+        if hasattr(parsed, '__call__') and not allow_callable:
             raise DDEvaluatorException(
                 'function {0} called from illegal location'.format(
                     match.group('function')
@@ -78,54 +86,54 @@ def json(json, allow_callable=False, iteration=None):
             value = str(value)
         return value
 
-    def evaluate_object(json):
+    def evaluate_object(parsed_object):
         """
         Evaluate tags in parsed JSON object.
         """
         evaluated = OrderedDict()
-        for k in json:
+        for k in parsed_object:
             evaluated[
-                evaluate_json(k, iteration=iteration)
-            ] = evaluate_json(json[k], iteration=iteration)
+                evaluate_parsed(k, iteration=iteration)
+            ] = evaluate_parsed(parsed_object[k], iteration=iteration)
         return evaluated
 
-    def evaluate_array(json):
+    def evaluate_array(parsed_array):
         """
         Evaluate tags in parsed JSON array.
         """
         evaluated = []
         index = 0
-        while index < len(json):
-            item = evaluate_json(
-                json[index],
+        while index < len(parsed_array):
+            item = evaluate_parsed(
+                parsed_array[index],
                 allow_callable=True,
-                iteration=iteration
+                iteration=index
             )
             if hasattr(item, '__call__'):
-                if index + 1 >= len(json):
+                if index + 1 >= len(parsed_array):
                     raise DDEvaluatorException(
                         'invalid use of {0} function at end of array'.format(
                             item.parent_function
                         )
                     )
                 if 'repeat' == item.parent_function:
-                    evaluated.extend(item(json[index + 1], evaluate_json))
+                    evaluated.extend(item(parsed_array[index + 1], evaluate_parsed))
                     index += 1
                 elif 'random' == item.parent_function:
-                    return item(json[index + 1:], evaluate_json)
+                    return item(parsed_array[index + 1:], evaluate_parsed)
             else:
                 evaluated.append(item)
             index += 1
         return evaluated
 
-    if isinstance(json, dict):
-        return evaluate_object(json)
-    elif isinstance(json, list):
-        return evaluate_array(json)
-    elif isinstance(json, str):
+    if isinstance(parsed, dict):
+        return evaluate_object(parsed)
+    elif isinstance(parsed, list):
+        return evaluate_array(parsed)
+    elif isinstance(parsed, str):
         try:
-            return re.sub(TAG_PATTERN, call_function, json)
+            return re.sub(TAG_PATTERN, call_function, parsed)
         except TypeError:
             # function returned a type other than string
-            return call_function(TAG_PATTERN.search(json))
-    return json
+            return call_function(TAG_PATTERN.search(parsed))
+    return parsed

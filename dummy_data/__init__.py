@@ -1,1 +1,1 @@
-from .generators import json
+from .generators import generate_json as json

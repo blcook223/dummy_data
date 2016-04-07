@@ -19,13 +19,6 @@ from .constants import (
 from .exceptions import DDFunctionException
 
 
-INDEX_TAG_PATTERN = re.compile(r"""
-    \{% \s*                             # open tag
-    index                               # function name
-    \s* %\}                             # close tag
-""", re.VERBOSE)
-
-
 NON_ZERO_PADDED_TIME_PATTERN = re.compile(r'\d:\d{2}(?:A|P)M', re.VERBOSE)
 
 
@@ -297,7 +290,7 @@ def repeat(*args, **_):
     return evaluate_repeat
 
 
-def index(*args, iteration):
+def index(*args, iteration=None):
     """
     Return index value if currently in repeat structure.
     """
