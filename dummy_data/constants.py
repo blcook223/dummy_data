@@ -378,3 +378,16 @@ LAST_NAMES = [
     'Stanton',
     'Vittadini',
 ]
+
+DANGEROUS_DATA = [
+        'NONE',
+        'NULL',
+        'TRUE',
+        'FALSE',
+        '',
+        'None',
+        'Null',
+        'null',
+        'True',
+        'False',
+]
