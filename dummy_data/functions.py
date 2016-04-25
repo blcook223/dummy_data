@@ -15,7 +15,8 @@ from .constants import (
     COMPANIES,
     FIRST_NAMES,
     LAST_NAMES,
-)
+    DANGEROUS_DATA
+    )
 from .exceptions import DDFunctionException
 
 
@@ -399,3 +400,6 @@ def time(*args, **_):
         if re.match(NON_ZERO_PADDED_TIME_PATTERN, args[2]):
             args[2] = '0{0}'.format(args[2])
     return datetime(*args)
+
+def dangerous_text(*args, **_):
+    return choice(DANGEROUS_DATA)
