@@ -12,4 +12,5 @@ def generate_json(data):
     """
     Parse json and call evaluator.
     """
-    return dumps(evaluate_parsed(loads(data, object_pairs_hook=OrderedDict)))
+    parsed = loads(data, object_pairs_hook=OrderedDict)
+    return dumps(evaluate_parsed(parsed))
